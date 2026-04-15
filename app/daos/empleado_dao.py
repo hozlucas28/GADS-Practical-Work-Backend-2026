@@ -1,0 +1,18 @@
+from __future__ import annotations
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.organizacion import Empleado
+
+
+class EmpleadoDAO:
+    """Acceso a datos de empleados."""
+
+    def listar_todos(self, db: Session) -> list[Empleado]:
+        stmt = select(Empleado).order_by(Empleado.id_empleado)
+        return list(db.scalars(stmt).all())
+
+    def obtener_por_id(self, db: Session, id_empleado: int) -> Empleado | None:
+        stmt = select(Empleado).where(Empleado.id_empleado == id_empleado)
+        return db.execute(stmt).scalar_one_or_none()
