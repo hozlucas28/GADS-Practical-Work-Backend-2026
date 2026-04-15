@@ -1,0 +1,49 @@
+# Entorno virtual
+venv/
+.venv/
+env/
+
+# Bytecode y caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Instalación / empaquetado
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Tests y cobertura
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Herramientas de análisis
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+
+# Variables de entorno (no subir secretos)
+.env
+.env.*
+!.env.example
+
+# Base de datos local (SQLite en desarrollo — app/database.py)
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# SO / IDE (opcional: si preferís versionar .vscode, borrá la línea siguiente)
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
