@@ -24,6 +24,11 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app.config import settings
+
+if "sqlite" not in settings.database_url:
+    raise SystemExit("Seed solo permitido contra SQLite (dev). database_url actual no contiene 'sqlite'.")
+
 import bcrypt
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -32,7 +37,7 @@ from app.database import SessionLocal, engine, init_db
 from app.models import enums as enums_models
 from app.models.base import Base
 from app.models.organizacion import Empleado, Empresa
-from app.models.seguridad import Rol, Usuario
+from app.models.seguridad import Usuario
 
 
 def _hash_password(plain: str) -> str:
@@ -130,16 +135,6 @@ PERSONAS: list[tuple[str, str, str, str, str, enums_models.Rol, str, str, str]] 
 ]
 
 
-def _obtener_o_crear_rol(db: Session, nombre: enums_models.Rol, descripcion: str) -> Rol:
-    stmt = select(Rol).where(Rol.nombre_rol == nombre)
-    rol = db.execute(stmt).scalar_one_or_none()
-    if rol is None:
-        rol = Rol(nombre_rol=nombre, descripcion=descripcion)
-        db.add(rol)
-        db.flush()
-    return rol
-
-
 def _obtener_o_crear_empresa_nero(db: Session) -> Empresa:
     stmt = select(Empresa).where(Empresa.cuit == EMPRESA_CUIT)
     emp = db.execute(stmt).scalar_one_or_none()
@@ -151,7 +146,7 @@ def _obtener_o_crear_empresa_nero(db: Session) -> Empresa:
         email_contacto=EMPRESA_EMAIL,
         telefono_contacto=EMPRESA_TEL,
         direccion=EMPRESA_DIR,
-        estado="activa",
+        estado=enums_models.EstadoEntidad.ACTIVO,
         fecha_alta=date.today(),
     )
     db.add(emp)
@@ -159,47 +154,33 @@ def _obtener_o_crear_empresa_nero(db: Session) -> Empresa:
     return emp
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Seed Nero IT + usuarios de desarrollo")
-    parser.add_argument(
-        "--reset-db",
-        action="store_true",
-        help="Elimina todas las tablas y las recrea (solo desarrollo; borra todos los datos).",
-    )
-    args = parser.parse_args()
+def _categoria_laboral(rol_enum: enums_models.Rol) -> enums_models.CategoriaLaboral:
+    if rol_enum == enums_models.Rol.ADMINISTRADOR:
+        return enums_models.CategoriaLaboral.ADMINISTRACION
+    if rol_enum == enums_models.Rol.CONTADOR_EXTERNO:
+        return enums_models.CategoriaLaboral.CONTADURIA
+    return enums_models.CategoriaLaboral.OPERACIONES
+
+
+def run_seed(*, reset_db: bool = False) -> tuple[int, int]:
+    """Ejecuta el seed. Devuelve (creados, omitidos).
+
+    Reutilizable desde tests. Valida que la BD sea SQLite (dev only).
+    """
+    if "sqlite" not in settings.database_url:
+        raise SystemExit("Seed solo permitido contra SQLite (dev).")
 
     import app.models  # noqa: F401 — registra tablas en Base.metadata
 
-    if args.reset_db:
+    if reset_db:
         Base.metadata.drop_all(bind=engine)
     init_db()
     db = SessionLocal()
+    creados = 0
+    omitidos = 0
     try:
-        rol_admin = _obtener_o_crear_rol(
-            db, enums_models.Rol.ADMINISTRADOR, "Administrador del sistema"
-        )
-        rol_empleado = _obtener_o_crear_rol(db, enums_models.Rol.EMPLEADO, "Empleado")
-        rol_contador = _obtener_o_crear_rol(
-            db, enums_models.Rol.CONTADOR_EXTERNO, "Contador externo"
-        )
         empresa = _obtener_o_crear_empresa_nero(db)
 
-        def _rol_instancia(rol_enum: enums_models.Rol) -> Rol:
-            if rol_enum == enums_models.Rol.ADMINISTRADOR:
-                return rol_admin
-            if rol_enum == enums_models.Rol.CONTADOR_EXTERNO:
-                return rol_contador
-            return rol_empleado
-
-        def _categoria_laboral(rol_enum: enums_models.Rol) -> str:
-            if rol_enum == enums_models.Rol.ADMINISTRADOR:
-                return "Administración"
-            if rol_enum == enums_models.Rol.CONTADOR_EXTERNO:
-                return "Contaduría"
-            return "Operaciones"
-
-        creados = 0
-        omitidos = 0
         for (
             nombre,
             apellido,
@@ -211,7 +192,9 @@ def main() -> None:
             dni,
             cuil,
         ) in PERSONAS:
-            if db.execute(select(Usuario).where(Usuario.email == email)).scalar_one_or_none():
+            if db.execute(
+                select(Usuario).where(Usuario.email == email)
+            ).scalar_one_or_none():
                 print(f"  Ya existe usuario con email {email}; se omite.")
                 omitidos += 1
                 continue
@@ -233,22 +216,21 @@ def main() -> None:
                 cuil=cuil,
                 fecha_ingreso=date.today(),
                 categoria_laboral=_categoria_laboral(rol_enum),
-                tipo_jornada="completa",
-                modalidad_fichada_habilitada="habilitada",
-                estado="activo",
+                tipo_jornada=enums_models.TipoJornada.COMPLETA,
+                modalidad_fichada_habilitada=enums_models.ModalidadFichada.HABILITADA,
+                estado=enums_models.EstadoEntidad.ACTIVO,
                 id_empresa=empresa.id_empresa,
             )
             db.add(empleado)
             db.flush()
 
-            rol = _rol_instancia(rol_enum)
             usuario = Usuario(
                 nombre_usuario=nombre_usuario,
                 contrasena_hash=_hash_password(contrasena),
                 email=email,
-                estado="activo",
+                rol=rol_enum,
+                estado=enums_models.EstadoEntidad.ACTIVO,
                 ultimo_acceso=None,
-                id_rol=rol.id_rol,
                 id_empleado=empleado.id_empleado,
             )
             db.add(usuario)
@@ -258,11 +240,23 @@ def main() -> None:
         db.commit()
         print(f"Empresa: {EMPRESA_RAZON_SOCIAL} (CUIT {EMPRESA_CUIT})")
         print(f"Usuarios nuevos: {creados}, omitidos (ya existian): {omitidos}")
+        return creados, omitidos
     except Exception:
         db.rollback()
         raise
     finally:
         db.close()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Seed Nero IT + usuarios de desarrollo")
+    parser.add_argument(
+        "--reset-db",
+        action="store_true",
+        help="Elimina todas las tablas y las recrea (solo desarrollo; borra todos los datos).",
+    )
+    args = parser.parse_args()
+    run_seed(reset_db=args.reset_db)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,11 @@
-from app.schemas.empleado import EmpleadoResponse, EmpleadoUpdate
-from app.schemas.usuario import UsuarioResponse, UsuarioUpdate
+from app.schemas.empleado import EmpleadoCreate, EmpleadoResponse, EmpleadoUpdate
+from app.schemas.usuario import UsuarioCreate, UsuarioResponse, UsuarioUpdate
 
-__all__ = ["EmpleadoResponse", "EmpleadoUpdate", "UsuarioResponse", "UsuarioUpdate"]
+__all__ = [
+    "EmpleadoCreate",
+    "EmpleadoResponse",
+    "EmpleadoUpdate",
+    "UsuarioCreate",
+    "UsuarioResponse",
+    "UsuarioUpdate",
+]

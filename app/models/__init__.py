@@ -11,7 +11,7 @@ from app.models.enums import (
     UnidadMedidaTipoNovedad,
 )
 from app.models.mixins import TimestampMixin
-from app.models.seguridad import Rol, Usuario
+from app.models.seguridad import Usuario
 from app.models.organizacion import Empresa, Empleado
 from app.models.horarios import Horario, AsignacionHorario
 from app.models.fichadas import OrigenFichada, Fichada
@@ -33,7 +33,6 @@ __all__ = [
     "TipoDiaEspecial",
     "AccionAuditoria",
     "TimestampMixin",
-    "Rol",
     "Usuario",
     "Empresa",
     "Empleado",

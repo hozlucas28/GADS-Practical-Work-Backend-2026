@@ -3,6 +3,10 @@ venv/
 .venv/
 env/
 
+# Runtime exports y archivos locales auxiliares
+exports/
+explicacion.html
+
 # Bytecode y caché de Python
 __pycache__/
 *.py[cod]

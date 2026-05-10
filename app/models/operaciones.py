@@ -6,17 +6,21 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     Enum as SAEnum,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.models import enums
 from app.models.base import Base
 from app.models.enums import (
     AccionAuditoria,
@@ -24,13 +28,14 @@ from app.models.enums import (
     TipoDiaEspecial,
     TipoFormatoExportacion,
 )
+from app.models.mixins import TimestampMixin
 from app.models.seguridad import Usuario
 
 if TYPE_CHECKING:
     from app.models.organizacion import Empleado, Empresa
 
 
-class Exportacion(Base):
+class Exportacion(Base, TimestampMixin):
     __tablename__ = "exportaciones"
 
     id_exportacion: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -41,8 +46,14 @@ class Exportacion(Base):
     )
     nombre_archivo: Mapped[str] = mapped_column(String(255), nullable=False)
     ruta_archivo: Mapped[str] = mapped_column(String(1024), nullable=False)
-    fecha_generacion: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    estado: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    fecha_generacion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
+    estado: Mapped[enums.EstadoExportacion] = mapped_column(
+        SAEnum(enums.EstadoExportacion, native_enum=False, length=20),
+        nullable=False,
+        index=True,
+    )
     version_formato: Mapped[str] = mapped_column(String(40), nullable=False)
 
     id_usuario_generador: Mapped[int] = mapped_column(
@@ -53,16 +64,20 @@ class Exportacion(Base):
     cierres_mensuales: Mapped[list["CierreMensual"]] = relationship(back_populates="exportacion")
 
 
-class CierreMensual(Base):
+class CierreMensual(Base, TimestampMixin):
     __tablename__ = "cierres_mensuales"
     __table_args__ = (
         UniqueConstraint("id_empresa", "anio", "mes", name="uq_cierre_empresa_periodo"),
+        CheckConstraint("mes BETWEEN 1 AND 12", name="ck_cierre_mes_valido"),
+        CheckConstraint("anio BETWEEN 2000 AND 2100", name="ck_cierre_anio_valido"),
     )
 
     id_cierre_mensual: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     anio: Mapped[int] = mapped_column(Integer, nullable=False)
     mes: Mapped[int] = mapped_column(Integer, nullable=False)
-    fecha_cierre: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    fecha_cierre: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
     estado: Mapped[EstadoCierreMensual] = mapped_column(
         SAEnum(EstadoCierreMensual, native_enum=False, length=20),
         nullable=False,
@@ -84,7 +99,7 @@ class CierreMensual(Base):
     )
 
 
-class ResumenMensualEmpleado(Base):
+class ResumenMensualEmpleado(Base, TimestampMixin):
     """Consolidado mensual por empleado dentro de un cierre de período.
 
     Fichada = dato crudo; Novedad = evento interpretado; este resumen agrega métricas del
@@ -98,6 +113,8 @@ class ResumenMensualEmpleado(Base):
             "id_cierre_mensual",
             name="uq_resumen_mensual_empleado_cierre",
         ),
+        CheckConstraint("mes BETWEEN 1 AND 12", name="ck_resumen_mes_valido"),
+        CheckConstraint("anio BETWEEN 2000 AND 2100", name="ck_resumen_anio_valido"),
     )
 
     id_resumen_mensual_empleado: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -122,8 +139,11 @@ class ResumenMensualEmpleado(Base):
     cierre_mensual: Mapped["CierreMensual"] = relationship(back_populates="resumenes_mensuales_empleado")
 
 
-class DiasEspeciales(Base):
+class DiasEspeciales(Base, TimestampMixin):
     __tablename__ = "dias_especiales"
+    __table_args__ = (
+        UniqueConstraint("fecha", "tipo_dia_especial", name="uq_dia_especial_fecha_tipo"),
+    )
 
     id_dia_especial: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     fecha: Mapped[date] = mapped_column(Date, nullable=False, index=True)
@@ -137,7 +157,10 @@ class DiasEspeciales(Base):
 
 
 class Auditoria(Base):
-    __tablename__ = "auditoria"
+    __tablename__ = "auditorias"
+    __table_args__ = (
+        Index("ix_auditoria_entidad_registro", "entidad_afectada", "id_registro_afectado"),
+    )
 
     id_auditoria: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     entidad_afectada: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
@@ -149,7 +172,9 @@ class Auditoria(Base):
     )
     valor_anterior: Mapped[str | None] = mapped_column(String(4000), nullable=True)
     valor_nuevo: Mapped[str | None] = mapped_column(String(4000), nullable=True)
-    fecha_hora: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    fecha_hora: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
 
     id_usuario: Mapped[int] = mapped_column(ForeignKey("usuarios.id_usuario"), nullable=False, index=True)
 

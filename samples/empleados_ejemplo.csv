@@ -1,0 +1,4 @@
+id_empresa,legajo,nombre,apellido,dni,cuil,fecha_ingreso,categoria_laboral,tipo_jornada,modalidad_fichada_habilitada
+1,20,Marcela,Rodriguez,40200020,27-40200020-3,2024-02-01,administracion,completa,habilitada
+1,21,Joaquin,Fernandez,40200021,20-40200021-5,2024-04-15,operaciones,parcial,habilitada
+1,22,Lucia,Sanchez,40200022,27-40200022-1,2024-08-01,contaduria,completa,habilitada

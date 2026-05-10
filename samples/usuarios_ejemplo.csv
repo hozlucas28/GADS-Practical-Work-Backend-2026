@@ -1,0 +1,4 @@
+nombre_usuario,contrasena,email,rol,id_empleado
+mrodriguez,clave12345,mrodriguez@nero.test,Empleado,5
+jfernandez,clave12345,jfernandez@nero.test,Empleado,6
+lsanchez,clave12345,lsanchez@nero.test,ContadorExterno,7
