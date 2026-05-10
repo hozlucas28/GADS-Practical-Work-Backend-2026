@@ -1,3 +1,3 @@
-from app.api.routers import empleados, usuarios
+from app.api.routers import auth, empleados, usuarios
 
-__all__ = ["empleados", "usuarios"]
+__all__ = ["auth", "empleados", "usuarios"]

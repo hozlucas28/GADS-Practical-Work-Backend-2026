@@ -1,0 +1,4 @@
+razon_social,cuit,email_contacto,telefono_contacto,direccion,fecha_alta
+ACME Argentina SA,30-12345678-9,contacto@acme.test,1144440001,Av. Corrientes 1000 CABA,2024-03-15
+TechMax SRL,30-98765432-1,hola@techmax.test,1144440002,Calle 50 1234 La Plata,2024-06-01
+Globant Test SA,30-55555555-5,info@globant.test,1144440003,Ing. Butty 240 CABA,2024-09-10

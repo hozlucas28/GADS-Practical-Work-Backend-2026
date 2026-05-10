@@ -4,10 +4,10 @@ from datetime import date
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.models import enums
+
 
 class EmpleadoResponse(BaseModel):
-    """Empleado para consultas y respuestas de escritura."""
-
     model_config = ConfigDict(from_attributes=True)
 
     id_empleado: int
@@ -18,23 +18,34 @@ class EmpleadoResponse(BaseModel):
     dni: str = Field(..., max_length=32)
     cuil: str = Field(..., max_length=20)
     fecha_ingreso: date
-    categoria_laboral: str = Field(..., max_length=120)
-    tipo_jornada: str = Field(..., max_length=80)
-    modalidad_fichada_habilitada: str = Field(..., max_length=80)
-    estado: str = Field(..., max_length=40)
+    categoria_laboral: enums.CategoriaLaboral
+    tipo_jornada: enums.TipoJornada
+    modalidad_fichada_habilitada: enums.ModalidadFichada
+    estado: enums.EstadoEntidad
+
+
+class EmpleadoCreate(BaseModel):
+    legajo: str = Field(..., min_length=1, max_length=50)
+    nombre: str = Field(..., min_length=1, max_length=120)
+    apellido: str = Field(..., min_length=1, max_length=120)
+    dni: str = Field(..., min_length=1, max_length=32)
+    cuil: str = Field(..., min_length=1, max_length=20)
+    fecha_ingreso: date
+    categoria_laboral: enums.CategoriaLaboral
+    tipo_jornada: enums.TipoJornada
+    modalidad_fichada_habilitada: enums.ModalidadFichada = enums.ModalidadFichada.HABILITADA
+    id_empresa: int
+    estado: enums.EstadoEntidad = enums.EstadoEntidad.ACTIVO
 
 
 class EmpleadoUpdate(BaseModel):
-    """Campos opcionales para actualización parcial (PATCH)."""
-
     legajo: str | None = Field(default=None, max_length=50)
     nombre: str | None = Field(default=None, max_length=120)
     apellido: str | None = Field(default=None, max_length=120)
     dni: str | None = Field(default=None, max_length=32)
     cuil: str | None = Field(default=None, max_length=20)
     fecha_ingreso: date | None = None
-    categoria_laboral: str | None = Field(default=None, max_length=120)
-    tipo_jornada: str | None = Field(default=None, max_length=80)
-    modalidad_fichada_habilitada: str | None = Field(default=None, max_length=80)
-    estado: str | None = Field(default=None, max_length=40)
-    id_empresa: int | None = None
+    categoria_laboral: enums.CategoriaLaboral | None = None
+    tipo_jornada: enums.TipoJornada | None = None
+    modalidad_fichada_habilitada: enums.ModalidadFichada | None = None
+    estado: enums.EstadoEntidad | None = None

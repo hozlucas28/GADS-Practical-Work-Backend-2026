@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GADS — Dashboard</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="dashboard-body">
+  <header class="topbar">
+    <div class="brand">
+      <strong>GADS</strong>
+      <span class="muted">preview</span>
+    </div>
+    <div class="user-info">
+      <span id="user-label" class="muted">…</span>
+      <button id="logout-btn" class="btn btn-ghost">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" aria-label="Navegación">
+      <ul>
+        <li><button data-view="dashboards" class="nav-btn active">Dashboards</button></li>
+        <li><button data-view="empresas" class="nav-btn">Empresas</button></li>
+        <li><button data-view="empleados" class="nav-btn">Empleados</button></li>
+        <li><button data-view="usuarios" class="nav-btn">Usuarios</button></li>
+        <li><button data-view="fichadas" class="nav-btn">Fichadas</button></li>
+      </ul>
+      <div class="sidebar-foot">
+        <p class="muted small">Preview — sin paginación, sin búsqueda. Las respuestas crudas se muestran en el panel inferior.</p>
+      </div>
+    </nav>
+
+    <main class="content">
+      <!-- DASHBOARDS -->
+      <section id="view-dashboards" class="view active">
+        <div class="view-head">
+          <h2>Dashboards</h2>
+          <div class="head-actions">
+            <label class="inline-input">
+              <span>Filtrar por empresa</span>
+              <input id="dash-id-empresa" type="number" min="1" placeholder="(todas)" />
+            </label>
+            <button id="dashboards-refresh" class="btn">Refrescar</button>
+          </div>
+        </div>
+
+        <div id="dash-resumen" class="resumen">
+          <h3>Resumen</h3>
+          <div class="resumen-grid">
+            <div><span class="big" id="dash-empresas-total">—</span><span>empresas</span></div>
+            <div><span class="big" id="dash-empleados-total">—</span><span>empleados</span></div>
+            <div><span class="big" id="dash-empleados-activos">—</span><span>empleados activos</span></div>
+            <div><span class="big" id="dash-usuarios-total">—</span><span>usuarios</span></div>
+            <div><span class="big" id="dash-fichadas-total">—</span><span>fichadas</span></div>
+            <div><span class="big" id="dash-fichadas-7d">—</span><span>fichadas (7d)</span></div>
+            <div><span class="big" id="dash-novedades-pend">—</span><span>novedades pendientes</span></div>
+            <div><span class="big" id="dash-novedades-total">—</span><span>novedades total</span></div>
+          </div>
+          <div class="dash-breakdown">
+            <div>
+              <h4>Empleados por categoría</h4>
+              <ul id="dash-cat-list" class="kv-list"></ul>
+            </div>
+            <div>
+              <h4>Empleados por jornada</h4>
+              <ul id="dash-jor-list" class="kv-list"></ul>
+            </div>
+            <div>
+              <h4>Usuarios por rol</h4>
+              <ul id="dash-rol-list" class="kv-list"></ul>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="section-h">Status de empleados</h3>
+        <div class="filters-row">
+          <label class="inline-input">
+            <span>Estado</span>
+            <select id="dash-estado">
+              <option value="">(todos)</option>
+              <option value="activo">activo</option>
+              <option value="inactivo">inactivo</option>
+            </select>
+          </label>
+        </div>
+        <div class="table-wrap">
+          <table id="dashboards-empleados-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Empresa</th><th>Legajo</th><th>Nombre</th>
+                <th>Estado</th><th>Jornada</th><th>Última fichada</th>
+                <th>Fichadas 30d</th><th>Novedades pend.</th><th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="dash-detalle-card" class="form-card open" hidden>
+          <h4 id="dash-detalle-titulo">Detalle empleado</h4>
+          <div class="resumen-grid small-grid">
+            <div><span class="big" id="det-fichadas-total">—</span><span>fichadas total</span></div>
+            <div><span class="big" id="det-fichadas-30d">—</span><span>fichadas (30d)</span></div>
+            <div><span class="big" id="det-novedades-total">—</span><span>novedades total</span></div>
+            <div><span class="big" id="det-novedades-pend">—</span><span>pendientes</span></div>
+          </div>
+          <div class="dash-breakdown">
+            <div>
+              <h4>Fichadas por mes</h4>
+              <ul id="det-mes-list" class="kv-list"></ul>
+            </div>
+            <div>
+              <h4>Novedades por tipo</h4>
+              <ul id="det-tipo-list" class="kv-list"></ul>
+            </div>
+          </div>
+          <p class="muted small" id="det-meta"></p>
+        </div>
+      </section>
+
+      <!-- EMPRESAS -->
+      <section id="view-empresas" class="view">
+        <div class="view-head">
+          <h2>Empresas</h2>
+          <div class="head-actions">
+            <button id="empresas-import" class="btn" title="Importar CSV">Importar CSV</button>
+            <input id="empresas-import-file" type="file" accept=".csv" hidden />
+            <button id="empresas-export" class="btn" title="Descargar CSV">Exportar CSV</button>
+            <button id="empresas-refresh" class="btn">Refrescar</button>
+          </div>
+        </div>
+
+        <details class="form-card">
+          <summary>Crear empresa</summary>
+          <form id="empresa-form" class="form">
+            <label><span>Razón social</span><input name="razon_social" required maxlength="255" /></label>
+            <label><span>CUIT</span><input name="cuit" required maxlength="20" placeholder="30-71888999-1" /></label>
+            <label><span>Email contacto</span><input name="email_contacto" type="email" required maxlength="255" /></label>
+            <label><span>Teléfono contacto</span><input name="telefono_contacto" required maxlength="50" /></label>
+            <label><span>Dirección</span><input name="direccion" required /></label>
+            <label><span>Fecha de alta</span><input name="fecha_alta" type="date" required /></label>
+            <button type="submit" class="btn btn-primary">Crear empresa</button>
+          </form>
+        </details>
+
+        <div class="table-wrap">
+          <table id="empresas-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Razón social</th><th>CUIT</th><th>Email</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- EMPLEADOS -->
+      <section id="view-empleados" class="view">
+        <div class="view-head">
+          <h2>Empleados</h2>
+          <div class="head-actions">
+            <button id="empleados-import" class="btn" title="Importar CSV">Importar CSV</button>
+            <input id="empleados-import-file" type="file" accept=".csv" hidden />
+            <button id="empleados-export" class="btn" title="Descargar CSV">Exportar CSV</button>
+            <button id="empleados-refresh" class="btn">Refrescar</button>
+          </div>
+        </div>
+
+        <details class="form-card">
+          <summary>Crear empleado</summary>
+          <form id="empleado-form" class="form">
+            <label><span>ID empresa</span><input name="id_empresa" type="number" required min="1" /></label>
+            <label><span>Legajo</span><input name="legajo" required maxlength="50" /></label>
+            <label><span>Nombre</span><input name="nombre" required maxlength="120" /></label>
+            <label><span>Apellido</span><input name="apellido" required maxlength="120" /></label>
+            <label><span>DNI</span><input name="dni" required maxlength="32" /></label>
+            <label><span>CUIL</span><input name="cuil" required maxlength="20" /></label>
+            <label><span>Fecha de ingreso</span><input name="fecha_ingreso" type="date" required /></label>
+            <label>
+              <span>Categoría laboral</span>
+              <select name="categoria_laboral" required>
+                <option value="operaciones">operaciones</option>
+                <option value="administracion">administracion</option>
+                <option value="contaduria">contaduria</option>
+              </select>
+            </label>
+            <label>
+              <span>Tipo jornada</span>
+              <select name="tipo_jornada" required>
+                <option value="completa">completa</option>
+                <option value="parcial">parcial</option>
+                <option value="turnos">turnos</option>
+              </select>
+            </label>
+            <button type="submit" class="btn btn-primary">Crear empleado</button>
+          </form>
+          <p class="muted small">
+            Para importar el CSV de ejemplo (<code>tests/fixtures/planilla_ejemplo.csv</code>) creá empleados con legajos
+            <code>14</code>, <code>10</code>, <code>12</code>, <code>13</code> en la empresa destino.
+          </p>
+        </details>
+
+        <div class="table-wrap">
+          <table id="empleados-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Empresa</th><th>Legajo</th><th>Nombre</th><th>Apellido</th><th>DNI</th><th>Jornada</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- USUARIOS -->
+      <section id="view-usuarios" class="view">
+        <div class="view-head">
+          <h2>Usuarios</h2>
+          <div class="head-actions">
+            <button id="usuarios-import" class="btn" title="Importar CSV">Importar CSV</button>
+            <input id="usuarios-import-file" type="file" accept=".csv" hidden />
+            <button id="usuarios-export" class="btn" title="Descargar CSV">Exportar CSV</button>
+            <button id="usuarios-refresh" class="btn">Refrescar</button>
+          </div>
+        </div>
+
+        <details class="form-card">
+          <summary>Crear usuario</summary>
+          <form id="usuario-form" class="form">
+            <label><span>Nombre de usuario</span><input name="nombre_usuario" required maxlength="120" /></label>
+            <label><span>Contraseña</span><input name="contrasena" type="password" required minlength="8" maxlength="255" /></label>
+            <label><span>Email</span><input name="email" type="email" required maxlength="255" /></label>
+            <label>
+              <span>Rol</span>
+              <select name="rol" required>
+                <option value="Administrador">Administrador</option>
+                <option value="Empleado">Empleado</option>
+                <option value="ContadorExterno">ContadorExterno</option>
+              </select>
+            </label>
+            <label><span>ID empleado</span><input name="id_empleado" type="number" required min="1" /></label>
+            <button type="submit" class="btn btn-primary">Crear usuario</button>
+          </form>
+          <p class="muted small">El usuario debe vincularse a un empleado existente. Creá el empleado primero.</p>
+        </details>
+
+        <div class="table-wrap">
+          <table id="usuarios-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Empleado</th><th>Estado</th><th>Último acceso</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FICHADAS -->
+      <section id="view-fichadas" class="view">
+        <div class="view-head">
+          <h2>Fichadas</h2>
+          <div class="head-actions">
+            <button id="fichadas-export" class="btn" title="Descargar XLSX">Exportar XLSX</button>
+            <button id="fichadas-refresh" class="btn">Refrescar</button>
+          </div>
+        </div>
+
+        <details class="form-card">
+          <summary>Crear fichada</summary>
+          <form id="fichada-form" class="form">
+            <label><span>Fecha y hora</span><input name="fecha_hora" type="datetime-local" required /></label>
+            <label>
+              <span>Tipo</span>
+              <select name="tipo_fichada" required>
+                <option value="entrada">entrada</option>
+                <option value="salida">salida</option>
+              </select>
+            </label>
+            <label><span>ID empleado</span><input name="id_empleado" type="number" required min="1" /></label>
+            <label><span>ID origen fichada</span><input name="id_origen_fichada" type="number" required min="1" value="1" /></label>
+            <label><span>Observación</span><input name="observacion" maxlength="500" /></label>
+            <button type="submit" class="btn btn-primary">Crear fichada</button>
+          </form>
+          <p class="muted small">
+            Origen 1 = <code>local</code>, 2 = <code>manual</code>, 3 = <code>excel</code> (seed por defecto).
+          </p>
+        </details>
+
+        <details class="form-card">
+          <summary>Importar fichadas (CSV con encabezados de planilla)</summary>
+          <form id="fichadas-import-form" class="form">
+            <label><span>Archivo CSV</span><input name="file" type="file" accept=".csv" required /></label>
+            <label><span>ID empresa destino</span><input name="id_empresa" type="number" required min="1" /></label>
+            <label class="checkbox-row">
+              <input name="dry_run" type="checkbox" />
+              <span>Dry run (no escribe en BD)</span>
+            </label>
+            <button type="submit" class="btn btn-primary">Importar CSV (planilla)</button>
+          </form>
+          <p class="muted small">
+            Fixture incluido: <code>tests/fixtures/planilla_ejemplo.csv</code> (247 fichadas, 4 empleados con legajos
+            14, 10, 12, 13). Creá esos empleados antes de importar o el backend devolverá errores de fila.
+          </p>
+        </details>
+
+        <div id="fichadas-resumen" class="resumen" hidden>
+          <h3>Resumen del import</h3>
+          <div class="resumen-grid">
+            <div><span class="big" id="res-total">0</span><span>filas</span></div>
+            <div><span class="big" id="res-creadas">0</span><span>fichadas creadas</span></div>
+            <div><span class="big" id="res-novedades">0</span><span>novedades</span></div>
+            <div><span class="big error" id="res-errores">0</span><span>errores</span></div>
+          </div>
+          <div id="fichadas-errores"></div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="fichadas-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Fecha/hora</th><th>Tipo</th><th>Empleado</th><th>Origen</th><th>Corregida</th><th>Observación</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- API RESPONSE PANEL -->
+      <section class="api-panel">
+        <details>
+          <summary>Respuesta API (última request)</summary>
+          <div class="api-meta" id="api-meta"></div>
+          <pre id="api-response"><code>Sin requests todavía.</code></pre>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="./app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      GADS.initDashboard();
+    });
+  </script>
+</body>
+</html>

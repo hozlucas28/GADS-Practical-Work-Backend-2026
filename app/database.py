@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-# Sustituir por URL real (p. ej. desde pydantic_settings)
-DATABASE_URL = "sqlite:///./app.db"
+from app.config import settings
 
 engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+    settings.database_url,
+    connect_args=(
+        {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
+    ),
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GADS — Login</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="login-body">
+  <main class="login-card">
+    <header class="login-header">
+      <h1>GADS</h1>
+      <p class="muted">Gestión de fichadas, novedades y cierres</p>
+    </header>
+
+    <form id="login-form" class="form">
+      <label>
+        <span>Usuario</span>
+        <input type="text" name="nombre_usuario" required autocomplete="username" value="admin" />
+      </label>
+      <label>
+        <span>Contraseña</span>
+        <input type="password" name="contrasena" required autocomplete="current-password" value="admin1234" />
+      </label>
+      <button type="submit" class="btn btn-primary">Ingresar</button>
+    </form>
+
+    <div id="login-message" class="message" hidden></div>
+
+    <section class="hint">
+      <h2>Preview</h2>
+      <p>Este es un <strong>preview HTML mínimo</strong> del frontend. La UI definitiva vive en otro repo. Usá las credenciales por defecto si arrancaste con <code>scripts/preview.py</code>:</p>
+      <ul>
+        <li>Usuario: <code>admin</code></li>
+        <li>Contraseña: <code>admin1234</code></li>
+      </ul>
+      <p>Documentación interactiva (Swagger): <a href="/docs" target="_blank">/docs</a></p>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      GADS.initLoginPage();
+    });
+  </script>
+</body>
+</html>
