@@ -60,11 +60,13 @@ def main() -> None:
 
     import uvicorn
 
+    reload_enabled = not args.no_reload
     uvicorn.run(
         "app.main:app",
         host=args.host,
         port=args.port,
-        reload=not args.no_reload,
+        reload=reload_enabled,
+        reload_dirs=[str(ROOT / "app"), str(ROOT / "scripts")] if reload_enabled else None,
     )
 
 

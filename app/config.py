@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     initial_empresa_cuit: str | None = None
 
     default_timezone: str = "America/Argentina/Buenos_Aires"
+    seed_demo_data: bool = False
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="GADS_", extra="ignore")
 

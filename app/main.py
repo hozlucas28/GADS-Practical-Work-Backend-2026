@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from app.api.routers import auth, empleados, usuarios
+from app.config import settings
 from app.database import SessionLocal, get_db, init_db
 from app.seed import cargar_seed_si_vacio
 from app.services import auth_service
@@ -20,7 +21,8 @@ async def lifespan(_app: FastAPI):
     init_db()
     db = SessionLocal()
     try:
-        cargar_seed_si_vacio(db)
+        if settings.seed_demo_data:
+            cargar_seed_si_vacio(db)
         auth_service.bootstrap_from_env(db)
     finally:
         db.close()

@@ -87,8 +87,16 @@ def _ejecutar_import(
     omitidos = 0
     errores: list[ImportRowError] = []
 
-    if not db.in_transaction():
-        db.begin()
+    # FastAPI dependencies may have already opened an implicit read transaction
+    # while resolving the current user. Start the import with a clean transaction
+    # so dry_run can reliably roll back rows released from nested SAVEPOINTs.
+    if db.in_transaction():
+        db.rollback()
+    if db.bind is not None and db.bind.dialect.name == "sqlite":
+        db.connection().exec_driver_sql("BEGIN")
+        transaction = None
+    else:
+        transaction = db.begin()
 
     for idx, fila in enumerate(filas, start=2):  # 1 es header
         try:
@@ -105,9 +113,15 @@ def _ejecutar_import(
             errores.append(ImportRowError(fila=idx, motivo=f"error inesperado: {e}"))
 
     if dry_run:
-        db.rollback()
+        if transaction is None:
+            db.rollback()
+        else:
+            transaction.rollback()
     else:
-        db.commit()
+        if transaction is None:
+            db.commit()
+        else:
+            transaction.commit()
 
     return ImportSummary(
         total_filas=len(filas),

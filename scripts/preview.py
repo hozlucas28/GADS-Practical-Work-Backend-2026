@@ -59,6 +59,7 @@ def main() -> int:
         "GADS_INITIAL_ADMIN_EMAIL": "admin@local.dev",
         "GADS_INITIAL_EMPRESA_RAZON_SOCIAL": "Nero IT",
         "GADS_INITIAL_EMPRESA_CUIT": "30-71888999-1",
+        "GADS_SEED_DEMO_DATA": "true",
         "GADS_JWT_SECRET": env.get(
             "GADS_JWT_SECRET", "dev-secret-change-me-32bytes-min!"
         ),
