@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     default_timezone: str = "America/Argentina/Buenos_Aires"
     seed_demo_data: bool = False
+    cors_origins: str = "*"
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="GADS_", extra="ignore")
 

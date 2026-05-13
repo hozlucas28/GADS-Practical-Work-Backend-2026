@@ -31,9 +31,15 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="GADS Backend", version="0.1.0", lifespan=lifespan)
 
+cors_origins = [
+    origin.strip()
+    for origin in settings.cors_origins.split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins or ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
