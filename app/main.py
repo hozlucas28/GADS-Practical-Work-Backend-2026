@@ -5,8 +5,9 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.requests import Request
 from sqlalchemy.orm import Session
 
 from app.api.routers import auth, empleados, usuarios
@@ -36,6 +37,34 @@ cors_origins = [
     for origin in settings.cors_origins.split(",")
     if origin.strip()
 ]
+
+
+def _cors_allow_origin(request: Request) -> str | None:
+    origin = request.headers.get("origin")
+    if "*" in cors_origins:
+        return "*"
+    if origin and origin in cors_origins:
+        return origin
+    return None
+
+
+@app.middleware("http")
+async def force_cors_headers(request: Request, call_next):
+    if request.method == "OPTIONS":
+        response = Response(status_code=204)
+    else:
+        response = await call_next(request)
+
+    allow_origin = _cors_allow_origin(request)
+    if allow_origin is not None:
+        response.headers["Access-Control-Allow-Origin"] = allow_origin
+        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = (
+            request.headers.get("access-control-request-headers") or "*"
+        )
+        response.headers["Vary"] = "Origin"
+
+    return response
 
 app.add_middleware(
     CORSMiddleware,
