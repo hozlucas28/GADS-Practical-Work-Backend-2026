@@ -7,6 +7,14 @@ from pydantic import BaseModel, ConfigDict
 from app.models import enums
 
 
+class OrigenFichadaResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id_origen_fichada: int
+    nombre_origen: enums.OrigenFichada
+    descripcion: str | None = None
+
+
 class FichadaImportError(BaseModel):
     fila: int
     motivo: str

@@ -11,7 +11,7 @@ from app.api.deps import get_current_user, get_db, require_rol
 from app.config import settings
 from app.daos.fichada_dao import FichadaDAO
 from app.models import enums
-from app.models.fichadas import Fichada
+from app.models.fichadas import Fichada, OrigenFichada
 from app.models.organizacion import Empleado
 from app.models.seguridad import Usuario
 from app.schemas.fichada import (
@@ -19,6 +19,7 @@ from app.schemas.fichada import (
     FichadaImportResponse,
     FichadaResponse,
     FichadaUpdate,
+    OrigenFichadaResponse,
 )
 from app.services import export_service
 from app.services.fichada_import_service import importar_csv, importar_xlsx
@@ -34,6 +35,16 @@ def get_fichada_service() -> FichadaService:
 def _id_empresa_de(usuario: Usuario) -> int | None:
     empleado = getattr(usuario, "empleado", None)
     return getattr(empleado, "id_empresa", None) if empleado else None
+
+
+@router.get("/origenes", response_model=list[OrigenFichadaResponse])
+def listar_origenes_fichada(
+    db: Session = Depends(get_db),
+    _: Usuario = Depends(require_rol(enums.Rol.ADMINISTRADOR, enums.Rol.CONTADOR_EXTERNO)),
+) -> list[OrigenFichadaResponse]:
+    """Devuelve los orígenes de fichada disponibles para usar al crear una fichada."""
+    origenes = db.execute(select(OrigenFichada).order_by(OrigenFichada.id_origen_fichada)).scalars().all()
+    return [OrigenFichadaResponse.model_validate(o) for o in origenes]
 
 
 @router.get("", response_model=list[FichadaResponse])
