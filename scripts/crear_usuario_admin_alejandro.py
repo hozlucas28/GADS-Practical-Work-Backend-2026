@@ -5,8 +5,12 @@ Seed de desarrollo: empresa Nero IT y empleados/usuarios indicados.
 Uso desde la raíz del proyecto:
   python scripts/crear_usuario_admin_alejandro.py
 
-Recrear tablas (solo desarrollo; borra todos los datos):
+Recrear tablas (borra todos los datos — usar con precaución en producción):
   python scripts/crear_usuario_admin_alejandro.py --reset-db
+
+Apuntar a una base de datos de Render (u otro PostgreSQL):
+  GADS_DATABASE_URL="postgresql+psycopg2://user:pass@host/dbname" \\
+    python scripts/crear_usuario_admin_alejandro.py
 
 Credenciales:
   - Alejandro Mabbdet: admin / admin (email admin@local.dev), rol Administrador
@@ -25,9 +29,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from app.config import settings
-
-if "sqlite" not in settings.database_url:
-    raise SystemExit("Seed solo permitido contra SQLite (dev). database_url actual no contiene 'sqlite'.")
 
 import bcrypt
 from sqlalchemy import select
@@ -165,10 +166,8 @@ def _categoria_laboral(rol_enum: enums_models.Rol) -> enums_models.CategoriaLabo
 def run_seed(*, reset_db: bool = False) -> tuple[int, int]:
     """Ejecuta el seed. Devuelve (creados, omitidos).
 
-    Reutilizable desde tests. Valida que la BD sea SQLite (dev only).
+    Reutilizable desde tests. Compatible con SQLite (dev) y PostgreSQL (Render).
     """
-    if "sqlite" not in settings.database_url:
-        raise SystemExit("Seed solo permitido contra SQLite (dev).")
 
     import app.models  # noqa: F401 — registra tablas en Base.metadata
 

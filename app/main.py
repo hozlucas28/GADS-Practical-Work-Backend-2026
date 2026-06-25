@@ -5,9 +5,8 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from starlette.requests import Request
 from sqlalchemy.orm import Session
 
 from app.api.routers import auth, empleados, usuarios
@@ -32,43 +31,16 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="GADS Backend", version="0.1.0", lifespan=lifespan)
 
-cors_origins = [
+cors_origins: list[str] = [
     origin.strip()
     for origin in settings.cors_origins.split(",")
     if origin.strip()
 ]
 
-
-def _cors_allow_origin(request: Request) -> str | None:
-    origin = request.headers.get("origin")
-    if "*" in cors_origins:
-        return "*"
-    if origin and origin in cors_origins:
-        return origin
-    return None
-
-
-@app.middleware("http")
-async def force_cors_headers(request: Request, call_next):
-    if request.method == "OPTIONS":
-        response = Response(status_code=204)
-    else:
-        response = await call_next(request)
-
-    allow_origin = _cors_allow_origin(request)
-    if allow_origin is not None:
-        response.headers["Access-Control-Allow-Origin"] = allow_origin
-        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = (
-            request.headers.get("access-control-request-headers") or "*"
-        )
-        response.headers["Vary"] = "Origin"
-
-    return response
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins or ["*"],
+    allow_origins=cors_origins if cors_origins != ["*"] else ["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

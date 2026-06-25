@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: gads-practical-work-backend-2026
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GADS_DATABASE_URL
+        value: postgresql+psycopg://dbempleados_user:XW0OlojSMh3W9TIS9AQ9tPDRf4Fe8q5v@dpg-d8ulo80js32c739t6uf0-a.oregon-postgres.render.com/dbempleados
+      - key: GADS_CORS_ORIGINS
+        value: https://gads-practical-work-frontend-2026-njeq.onrender.com,http://localhost:3000,http://localhost:3001
+      - key: GADS_JWT_SECRET
+        generateValue: true
+      - key: GADS_JWT_EXPIRE_MINUTES
+        value: "60"
+      - key: GADS_SEED_DEMO_DATA
+        value: "false"

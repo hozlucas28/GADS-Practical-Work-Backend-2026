@@ -68,27 +68,6 @@ def test_seed_es_idempotente(tmp_path: Path) -> None:
     assert "omitidos (ya existian): 7" in segundo.stdout
 
 
-def test_seed_falla_si_no_es_sqlite(tmp_path: Path) -> None:
-    # Forzamos una database_url que no contiene "sqlite".
-    fake_db = tmp_path / "nope.db"
-    env = {
-        "GADS_DATABASE_URL": (
-            "postgresql+psycopg://user:pass@localhost:5432/no_existe_db"
-        ),
-    }
-    result = subprocess.run(
-        [sys.executable, str(SCRIPT)],
-        env={**os.environ, **env},
-        cwd=str(ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode != 0
-    assert "sqlite" in (result.stderr + result.stdout).lower()
-    _ = fake_db  # no se crea, solo para silenciar linter
-
-
 def test_seed_run_seed_smoke(tmp_path: Path) -> None:
     """Smoke test del seed completo: tras reset, reporta 7 usuarios creados."""
     db_path = tmp_path / "seed_smoke.db"
